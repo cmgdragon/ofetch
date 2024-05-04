@@ -98,6 +98,11 @@ export function createFetch(globalOptions: CreateFetchOptions = {}): $Fetch {
     // Uppercase method name
     context.options.method = context.options.method?.toUpperCase();
 
+    // Normalize headers
+    if (context.options.headers instanceof Headers) {
+      context.options.headers = Object.fromEntries(context.options.headers);
+    }
+
     if (context.options.onRequest) {
       await context.options.onRequest(context);
     }
