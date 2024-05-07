@@ -99,3 +99,9 @@ export function mergeFetchOptions(
 
   return merged;
 }
+
+export function normalizeHeaders(headers: any) {
+  if (headers instanceof Headers) {
+    headers = Object.fromEntries(headers)
+  }
+}

@@ -7,6 +7,7 @@ import {
   isJSONSerializable,
   detectResponseType,
   mergeFetchOptions,
+  normalizeHeaders,
 } from "./utils";
 import type {
   CreateFetchOptions,
@@ -62,11 +63,7 @@ export function createFetch(globalOptions: CreateFetchOptions = {}): $Fetch {
           ? context.options.retryStatusCodes.includes(responseCode)
           : retryStatusCodes.has(responseCode))
       ) {
-        // Normalize headers
-        if (context.options.headers instanceof Headers) {
-          context.options.headers = Object.fromEntries(context.options.headers);
-        }
-
+        normalizeHeaders(context.options.headers);
         const retryDelay = context.options.retryDelay || 0;
         if (retryDelay > 0) {
           await new Promise((resolve) => setTimeout(resolve, retryDelay));
@@ -103,13 +100,20 @@ export function createFetch(globalOptions: CreateFetchOptions = {}): $Fetch {
     // Uppercase method name
     context.options.method = context.options.method?.toUpperCase();
 
-    // Normalize headers
-    if (context.options.headers instanceof Headers) {
-      context.options.headers = Object.fromEntries(context.options.headers);
-    }
-
     if (context.options.onRequest) {
       await context.options.onRequest(context);
+    }
+
+    // Normalize & merge headers
+    if (context.options.headers) {
+      normalizeHeaders(context.options.headers);
+      context.options.headers = {
+        ..._options.headers ? normalizeHeaders(_options.headers) : {},
+        ...Object.fromEntries(
+          Object.entries(context.options.headers)
+            .map(([k, v]) => [k.toLowerCase(), v])
+        )
+      };
     }
 
     if (typeof context.request === "string") {
